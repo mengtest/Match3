@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 /// <summary>
 /// Main script of the game, that manages its state and is responsible for creating and destroying gems.
@@ -40,7 +41,7 @@ public class GameManager : MonoBehaviour
     /// <returns>Random gem.</returns>
     private GameObject GetRandomGem()
     {
-        return GemPrefabs[Random.Range(0, GemPrefabs.Length)];
+        return GemPrefabs[UnityEngine.Random.Range(0, GemPrefabs.Length)];
     }
 
     /// <summary>
@@ -71,6 +72,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void SetSpawnPositions()
     {
+        SpawnPoints = new Vector3[Constants.Columns];
         Vector3 bottomLeft = new Vector3(Constants.FirstGemPosX, Constants.FirstGemPosY, Constants.FirstGemPosZ);
         float offset = Constants.GemOffset;
         for (int column = 0; column < Constants.Columns; column++)
@@ -78,6 +80,7 @@ public class GameManager : MonoBehaviour
             SpawnPoints[column] = bottomLeft
                 + new Vector3(column * offset, Constants.Rows * offset);
         }
+
     }
 
     /// <summary>
