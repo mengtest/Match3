@@ -4,8 +4,8 @@ using UnityEngine;
 /// <summary>
 /// This class is used to describe a single gem on the board.
 /// </summary>
-public class Gem : MonoBehaviour {
-    
+public class Gem : MonoBehaviour
+{
     public int Row { get; set; }
     public int Column { get; set; }
     public string Color { get; set; }

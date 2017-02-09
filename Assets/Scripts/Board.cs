@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+
 /// <summary>
 /// This class represents a board of gems in the game.
 /// </summary>
@@ -110,7 +111,6 @@ public class Board
 
         return matches.Distinct();
     }
-
 
     /// <summary>
     /// Checks for a matching vertical line of gems.
