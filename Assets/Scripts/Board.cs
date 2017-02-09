@@ -223,4 +223,25 @@ public class Board
         }
         return slots;
     }
+
+    /// <summary>
+    /// This method returns the indices of columns that are not full.
+    /// </summary>
+    /// <returns>List of not entirely full columns.</returns>
+    public IEnumerable<int> GetColumnsMissingGems()
+    {
+        List<int> columns = new List<int>();
+        for (int column = 0; column < Constants.Columns; column++)
+        {
+            for (int row = Constants.Rows -1; row >= 0; row--)
+            {
+                if (gems[row, column] == null)
+                {
+                    columns.Add(column);
+                    break;
+                }
+            }
+        }
+        return columns;
+    }
 }

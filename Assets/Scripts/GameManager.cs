@@ -7,9 +7,10 @@ using UnityEngine;
 public class GameManager : MonoBehaviour
 {
     public GameObject[] GemPrefabs;
-    public Board gems;
+    public Board Gems;
 
     private Vector3[] SpawnPoints;
+    private GameState State = GameState.Default;
 
     // Use this for initialization
     private void Start()
@@ -21,6 +22,19 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     private void Update()
     {
+        if(State == GameState.Default)
+        {
+            if (Input.GetMouseButtonDown(0)) // Player clicked
+            {
+                RaycastHit hit;
+                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+                if (Physics.Raycast(ray, out hit))
+                {
+                    Destroy(hit.collider.gameObject);
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -64,7 +78,7 @@ public class GameManager : MonoBehaviour
         gem.Row = row;
         gem.Column = column;
         // Add object to board
-        gems[row, column] = obj;
+        Gems[row, column] = obj;
     }
 
     /// <summary>
@@ -92,36 +106,36 @@ public class GameManager : MonoBehaviour
         {
             for (int column = 0; column < Constants.Columns; column++)
             {
-                Destroy(gems[row, column]);
+                Destroy(Gems[row, column]);
             }
         }
     }
 
     private void InitializeBoard()
     {
-        if (gems != null)
+        if (Gems != null)
             DestroyBoard();
 
-        gems = new Board();
+        Gems = new Board();
 
         for (int row = 0; row < Constants.Rows; row++)
         {
             for (int column = 0; column < Constants.Columns; column++)
             {
-                GameObject newGem = GetRandomGem();
+                GameObject randomGem = GetRandomGem();
 
                 // make sure we don't create a match
                 while (column >= 2
-                    && gems[row, column - 1].GetComponent<Gem>().IsSameColor(newGem.GetComponent<Gem>())
-                    && gems[row, column - 2].GetComponent<Gem>().IsSameColor(newGem.GetComponent<Gem>()))
-                    newGem = GetRandomGem();
+                    && Gems[row, column - 1].GetComponent<Gem>().IsSameColor(randomGem.GetComponent<Gem>())
+                    && Gems[row, column - 2].GetComponent<Gem>().IsSameColor(randomGem.GetComponent<Gem>()))
+                    randomGem = GetRandomGem();
 
                 while (row >= 2
-                    && gems[row - 1, column].GetComponent<Gem>().IsSameColor(newGem.GetComponent<Gem>())
-                    && gems[row - 2, column].GetComponent<Gem>().IsSameColor(newGem.GetComponent<Gem>()))
-                    newGem = GetRandomGem();
+                    && Gems[row - 1, column].GetComponent<Gem>().IsSameColor(randomGem.GetComponent<Gem>())
+                    && Gems[row - 2, column].GetComponent<Gem>().IsSameColor(randomGem.GetComponent<Gem>()))
+                    randomGem = GetRandomGem();
 
-                InstantiateGem(row, column, newGem);
+                InstantiateGem(row, column, randomGem);
             }
         }
     }
@@ -130,5 +144,23 @@ public class GameManager : MonoBehaviour
     {
         InitializeBoard();
         SetSpawnPositions();
+    }
+
+    /// <summary>
+    /// This method is used to fill columns that not full with new gems.
+    /// </summary>
+    private void FillColumns()
+    {
+        var columnsNotFull = Gems.GetColumnsMissingGems();
+        //find how many null values the column has
+        foreach (int column in columnsNotFull)
+        {
+            var emptySlots = Gems.GetEmptySlotsInColumn(column);
+            foreach (var slot in emptySlots)
+            {
+                var randomGem = GetRandomGem();
+                InstantiateGem(slot.Row, slot.Column, randomGem); // TODO Spawn in spawn points and move them.
+            }
+        }
     }
 }
