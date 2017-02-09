@@ -3,15 +3,15 @@
 public class CameraResizer : MonoBehaviour
 {
     public Bounds targetBounds;
-    Resolution res;
+    private Resolution res;
 
-    void Start()
+    private void Start()
     {
         ResizeCamera();
         res = Screen.currentResolution;
     }
 
-    void LateUpdate()
+    private void LateUpdate()
     {
         if (res.width != Screen.currentResolution.width || res.height != Screen.currentResolution.height)
         {
@@ -20,7 +20,7 @@ public class CameraResizer : MonoBehaviour
         }
     }
 
-    void ResizeCamera()
+    private void ResizeCamera()
     {
         float screenRatio = (float)Screen.width / (float)Screen.height;
         float targetRatio = targetBounds.size.x / targetBounds.size.y;
@@ -37,5 +37,4 @@ public class CameraResizer : MonoBehaviour
 
         transform.position = new Vector3(targetBounds.center.x, targetBounds.center.y, -15f);
     }
-
 }

@@ -1,6 +1,9 @@
-﻿using System.Collections;
+﻿using DavidOchmann.Animation;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
 /// Main script of the game, that manages its state and is responsible for creating and destroying gems.
@@ -13,12 +16,21 @@ public class GameManager : MonoBehaviour
     private Vector3[] SpawnPoints;
     private GameState State = GameState.Default;
     private GameObject SelectedGem;
+    private DTween dTween = new DTween(); // Used for animation
+    private Text ScoreText;
+    private int score = 0;
 
     // Use this for initialization
     private void Start()
     {
+        ScoreText = GameObject.Find("UI").GetComponentInChildren<Text>();
         SetGemPrefabColors();
         InitializeBoardAndSpawnPoints();
+    }
+
+    public void FixedUpdate()
+    {
+        dTween.Update();
     }
 
     // Update is called once per frame
@@ -73,8 +85,9 @@ public class GameManager : MonoBehaviour
 
         //Move the gems to their new positions
         var temp = SelectedGem.transform.position;
-        SelectedGem.transform.position = hitGem.transform.position;
-        hitGem.transform.position = temp;
+        MoveGemAnimated(SelectedGem, hitGem.transform.position);
+        MoveGemAnimated(hitGem, temp);
+        yield return new WaitForSeconds(Constants.MoveAnimationDuration);
 
         //get the matches via the helper methods
         var gem1Matches = Gems.GetMatches(SelectedGem);
@@ -84,24 +97,25 @@ public class GameManager : MonoBehaviour
         // Not enough matches - undo swap
         if (totalMatches.Count() < 3)
         {
-            yield return new WaitForSeconds(0.5f);
             temp = SelectedGem.transform.position;
-            SelectedGem.transform.position = hitGem.transform.position;
-            hitGem.transform.position = temp;
+            MoveGemAnimated(SelectedGem, hitGem.transform.position);
+            MoveGemAnimated(hitGem, temp);
+            yield return new WaitForSeconds(Constants.MoveAnimationDuration);
             Gems.UndoSwap();
         }
-
+        List<GameObject> ToDestroy = new List<GameObject>(); // Objects to destroy
         while (totalMatches.Count() >= 3)
         {
             var columns = totalMatches.Select(obj => obj.GetComponent<Gem>().Column).Distinct();
             foreach (var gem in totalMatches)
             {
                 Gems.Remove(gem); // Remove from board
-                Destroy(gem); // Remove from scene
+                gem.SetActive(false); // Hide for now
+                ToDestroy.Add(gem);
             }
+            IncreaseScoreBy(totalMatches.Count());
 
             // Collapse columns that have empty slots
-            var collapsedColumns = columns.Count();
             var collapsedGems = Gems.Collapse(columns);
 
             // Move collapsed gems
@@ -111,14 +125,21 @@ public class GameManager : MonoBehaviour
                 float posX = Constants.FirstGemPosX + gem.Column * Constants.GemOffset;
                 float posY = Constants.FirstGemPosY + gem.Row * Constants.GemOffset;
                 float posZ = Constants.FirstGemPosZ;
-                gemGO.transform.position = new Vector3(posX, posY, posZ);
+                MoveGemAnimated(gemGO, posX, posY, posZ);
             }
+            yield return new WaitForSeconds(Constants.MoveAnimationDuration);
             // Create new gems in these columns
             var createdGems = FillColumns(columns);
+            yield return new WaitForSeconds(Constants.MoveAnimationDuration);
 
             // Check for new matches
             totalMatches = Gems.GetMatches(collapsedGems.Gems).Union(Gems.GetMatches(createdGems.Gems)).Distinct();
         }
+
+        // Destroy unneded gems
+        for (int i = 0; i < ToDestroy.Count(); ++i)
+            Destroy(ToDestroy[i]);
+        ToDestroy.Clear();
 
         State = GameState.Default;
     }
@@ -203,6 +224,8 @@ public class GameManager : MonoBehaviour
 
     private void InitializeBoard()
     {
+        score = 0;
+
         if (Gems != null)
             DestroyBoard();
 
@@ -236,6 +259,25 @@ public class GameManager : MonoBehaviour
         SetSpawnPositions();
     }
 
+    private void MoveGemAnimated(GameObject gemObj, float posY)
+    {
+        var mutate = gemObj.GetComponent<Mutate>();
+        if (mutate != null)
+            dTween.To(mutate, Constants.MoveAnimationDuration, new { delay = 0.0f, y = posY }, null);
+    }
+
+    private void MoveGemAnimated(GameObject gemObj, Vector3 pos)
+    {
+        MoveGemAnimated(gemObj, pos.x, pos.y, pos.z);
+    }
+
+    private void MoveGemAnimated(GameObject gemObj, float posX, float posY, float posZ)
+    {
+        var mutate = gemObj.GetComponent<Mutate>();
+        if (mutate != null)
+            dTween.To(mutate, Constants.MoveAnimationDuration, new { delay = 0.0f, x = posX, y = posY, z = posZ }, null);
+    }
+
     /// <summary>
     /// This method is used to fill columns that not full with new gems.
     /// </summary>
@@ -245,14 +287,26 @@ public class GameManager : MonoBehaviour
         foreach (int column in columnsNotFull)
         {
             var emptySlots = Gems.GetEmptySlotsInColumn(column);
-            var emptySlotCount = emptySlots.Count();
             foreach (var slot in emptySlots)
             {
                 var randomGem = GetRandomGem();
                 var gemGO = InstantiateGem(slot.Row, slot.Column, randomGem); // TODO Spawn in spawn points and move them.
+
+                var destination = gemGO.transform.position;
+                gemGO.transform.position = SpawnPoints[slot.Column];
+                MoveGemAnimated(gemGO, destination);
                 changedGems.Add(gemGO);
             }
         }
         return changedGems;
+    }
+
+    /// <summary>
+    /// Increases the players score by X points.
+    /// </summary>
+    private void IncreaseScoreBy(int points)
+    {
+        score += points;
+        ScoreText.text = "Score: " + score;
     }
 }

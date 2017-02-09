@@ -211,7 +211,6 @@ public class Board
                     {
                         if (gems[row2, column] != null)
                         {
-                            var text = ("Collapse " + gems[row2, column].GetComponent<Gem>() + " to [" + row + "][" + column + "]");
                             // Move the gem down
                             gems[row, column] = gems[row2, column];
                             gems[row2, column] = null;

@@ -16,4 +16,6 @@ public class Constants
 
     // The offset by which to move a GameObject, to alter position by 1
     public static readonly float GemOffset = 1.5f;
+
+    public static readonly float MoveAnimationDuration = 0.5f;
 }
