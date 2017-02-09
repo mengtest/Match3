@@ -171,6 +171,21 @@ public class Board
     }
 
     /// <summary>
+    /// Checks for matching lines of gems.
+    /// </summary>
+    /// <param name="gemGOs">Gems that should be checked.</param>
+    /// <returns>Matched gems</returns>
+    public IEnumerable<GameObject> GetMatches(IEnumerable<GameObject> gemGOs)
+    {
+        List<GameObject> matches = new List<GameObject>();
+        foreach (var gemGO in gemGOs)
+        {
+            matches.AddRange(GetMatches(gemGO));
+        }
+        return matches.Distinct();
+    }
+
+    /// <summary>
     /// Removes a gem GameObject from the board (sets it to null on board).
     /// </summary>
     /// <param name="gemGO">The gem GameObject to remove.</param>
@@ -183,8 +198,9 @@ public class Board
     /// This method collapses the specified columns (moves the candy down over empty spaces).
     /// </summary>
     /// <param name="columns">The columns to collapse.</param>
-    public void Collapse(IEnumerable<int> columns)
+    public ChangedGems Collapse(IEnumerable<int> columns)
     {
+        ChangedGems changedGems = new ChangedGems();
         foreach (var column in columns)
         {
             for (int row = 0; row < Constants.Rows - 1; row++)
@@ -195,17 +211,20 @@ public class Board
                     {
                         if (gems[row2, column] != null)
                         {
+                            var text = ("Collapse " + gems[row2, column].GetComponent<Gem>() + " to [" + row + "][" + column + "]");
                             // Move the gem down
                             gems[row, column] = gems[row2, column];
                             gems[row2, column] = null;
                             gems[row, column].GetComponent<Gem>().Row = row;
                             gems[row, column].GetComponent<Gem>().Column = column;
+                            changedGems.Add(gems[row, column]);
                             break;
                         }
                     }
                 }
             }
         }
+        return changedGems;
     }
 
     /// <summary>
@@ -233,7 +252,7 @@ public class Board
         List<int> columns = new List<int>();
         for (int column = 0; column < Constants.Columns; column++)
         {
-            for (int row = Constants.Rows -1; row >= 0; row--)
+            for (int row = Constants.Rows - 1; row >= 0; row--)
             {
                 if (gems[row, column] == null)
                 {

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using UnityEngine;
 
 /// <summary>
@@ -36,5 +37,11 @@ public class Gem : MonoBehaviour
         temp = gem1.Column;
         gem1.Column = gem2.Column;
         gem2.Column = temp;
+    }
+
+    public override string ToString()
+    {
+        StringBuilder sb = new StringBuilder();
+        return sb.Append(Color != null ? Color + " " : "NULL").Append("[" + Row + "][" + Column + "]").ToString();
     }
 }

@@ -10,6 +10,7 @@ public class Constants
 
     // The position of the gem in the bottom left corner
     public static readonly float FirstGemPosX = -5.25f;
+
     public static readonly float FirstGemPosY = -7.5f;
     public static readonly float FirstGemPosZ = -7.5f;
 
