@@ -85,7 +85,9 @@ public class GameManager : MonoBehaviour
 
         //Move the gems to their new positions
         var temp = SelectedGem.transform.position;
-        MoveGemAnimated(SelectedGem, hitGem.transform.position);
+        var temp2 = hitGem.transform.position;
+        SelectedGem.transform.position.Set(temp.x, temp.y, temp.z - 1.5f);
+        MoveGemAnimated(SelectedGem, temp2.x, temp2.y, temp.z - 1.5f);
         MoveGemAnimated(hitGem, temp);
         yield return new WaitForSeconds(Constants.MoveAnimationDuration);
 
@@ -97,12 +99,14 @@ public class GameManager : MonoBehaviour
         // Not enough matches - undo swap
         if (totalMatches.Count() < 3)
         {
-            temp = SelectedGem.transform.position;
-            MoveGemAnimated(SelectedGem, hitGem.transform.position);
-            MoveGemAnimated(hitGem, temp);
+            MoveGemAnimated(SelectedGem, temp.x, temp.y, temp.z);
+            MoveGemAnimated(hitGem, temp2);
             yield return new WaitForSeconds(Constants.MoveAnimationDuration);
             Gems.UndoSwap();
         }
+        temp = SelectedGem.transform.position;
+        SelectedGem.transform.position.Set(temp.x, temp.y, temp.z + 1.5f);
+
         List<GameObject> ToDestroy = new List<GameObject>(); // Objects to destroy
         while (totalMatches.Count() >= 3)
         {
@@ -142,6 +146,15 @@ public class GameManager : MonoBehaviour
         ToDestroy.Clear();
 
         State = GameState.Default;
+
+        ResetIfStuck();
+    }
+
+    private void ResetIfStuck()
+    {
+        var possibleMatches = Utility.HasAtLeastXPotentialMatches(Gems, 1);
+        if (possibleMatches < 1)
+            InitializeBoard(); // Reset board, because we're stuck (no more movements left)
     }
 
     /// <summary>
@@ -224,8 +237,6 @@ public class GameManager : MonoBehaviour
 
     private void InitializeBoard()
     {
-        score = 0;
-
         if (Gems != null)
             DestroyBoard();
 
@@ -251,6 +262,8 @@ public class GameManager : MonoBehaviour
                 InstantiateGem(row, column, randomGem);
             }
         }
+
+        ResetIfStuck();
     }
 
     public void InitializeBoardAndSpawnPoints()
